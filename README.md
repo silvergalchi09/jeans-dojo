@@ -22,3 +22,21 @@ npm run dev
 개발 서버는 [http://127.0.0.1:43123](http://127.0.0.1:43123) 에서 연다.
 
 채점 규칙은 `npm test`로 확인한다.
+
+## Vercel에 배포
+
+환경 변수, 데이터베이스, 비밀 키는 없다. 진도는 각 브라우저에만 저장된다.
+
+Vercel이 이 저장소를 Next.js로 알아본다. Build Command는 `npm run build`로 두고, Output Directory는 비워 둔다. `.next`를 출력 폴더로 지정하면 배포가 실패한다.
+
+1. 이 프로젝트를 GitHub 저장소로 만든다.
+2. [Vercel에서 새 프로젝트](https://vercel.com/new)를 열고 그 저장소를 가져온다.
+3. Framework Preset이 Next.js인지 확인하고 Deploy를 누른다.
+
+터미널에서 올리려면 프로젝트 폴더에서 다음을 실행한다.
+
+```bash
+npx vercel
+```
+
+처음 한 번은 Vercel 로그인이 필요하다. 질문은 기본값으로 넘어가면 된다. Node.js는 22를 쓴다.
