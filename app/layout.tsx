@@ -15,9 +15,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "진스 도장 — 선형회귀 빈칸 훈련",
+  title: "수행 도장 — 회귀와 분류 빈칸 훈련",
   description:
-    "목둘레로 허리둘레를 맞히는 선형회귀 코드의 빈칸을, 한글 설명을 보고 채우는 수행평가 연습.",
+    "진스 선형회귀와 펭귄 결정트리 코드의 빈칸을, 한글 설명을 보고 채우는 수행평가 연습.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

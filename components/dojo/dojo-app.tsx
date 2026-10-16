@@ -11,12 +11,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { questionCount, questionsFor, stages, story } from "@/lib/content"
+import { courseById, courses } from "@/lib/catalog"
+import { questionCount, questionsFor, type CourseId } from "@/lib/course"
 import {
   commitSave,
   EMPTY_SAVE,
   getSaveServerSnapshot,
   getSaveSnapshot,
+  peekSave,
+  setSaveCourse,
   subscribeSave,
   type Save,
 } from "@/lib/save"
@@ -28,6 +31,7 @@ import { TrapView } from "@/components/dojo/trap-view"
 import { StageMap, TrainView } from "@/components/dojo/train-view"
 
 const titles: Record<Screen["name"], string> = {
+  lobby: "고르기",
   home: "홈",
   study: "해설",
   map: "단계",
@@ -43,19 +47,28 @@ export function DojoApp() {
     const next = typeof updater === "function" ? updater(getSaveSnapshot()) : updater
     commitSave(next)
   }
-  const [screen, setScreen] = useState<Screen>({ name: "home" })
+  const [courseId, setCourseId] = useState<CourseId>("jeans")
+  const [screen, setScreen] = useState<Screen>({ name: "lobby" })
   const [resetOpen, setResetOpen] = useState(false)
   const hydrated = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false,
   )
+  const course = courseById(courseId)
+
+  function openCourse(id: CourseId) {
+    setSaveCourse(id)
+    setCourseId(id)
+    setScreen({ name: "home" })
+  }
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [screen])
 
   const value = {
+    course,
     save,
     hydrated,
     screen,
@@ -84,13 +97,22 @@ export function DojoApp() {
       <div className="dojo min-h-full flex-1">
         <header className="sticky top-0 z-20 border-b border-[#dccbae] bg-[#efe6d6]/90 backdrop-blur">
           <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between px-4">
-            <button type="button" className="text-left" onClick={() => setScreen({ name: "home" })}>
-              <span className="block text-[11px] tracking-[0.16em] text-[#8a5a12]">JEANS LAB</span>
-              <span className="block font-semibold text-[#1d3e66]">진스 도장</span>
+            <button
+              type="button"
+              className="text-left"
+              onClick={() => setScreen(screen.name === "home" || screen.name === "lobby" ? { name: "lobby" } : { name: "home" })}
+            >
+              <span className="block text-[11px] tracking-[0.16em] text-[#8a5a12]">
+                {screen.name === "lobby" ? "TWO LABS" : course.kicker}
+              </span>
+              <span className="block font-semibold text-[#1d3e66]">
+                {screen.name === "lobby" ? "수행 도장" : course.title}
+              </span>
             </button>
             <span className="text-sm text-[#5c5346]">{titles[screen.name]}</span>
           </div>
         </header>
+        {screen.name === "lobby" && <Lobby hydrated={hydrated} onOpen={openCourse} />}
         {screen.name === "home" && <Home onReset={() => setResetOpen(true)} />}
         {screen.name === "study" && <StudyView />}
         {screen.name === "map" && <StageMap />}
@@ -106,7 +128,7 @@ export function DojoApp() {
           <DialogHeader>
             <DialogTitle>진도를 지울까?</DialogTitle>
             <DialogDescription>
-              외운 칸, 모의고사 최고 점수, 빈칸지 점수가 이 브라우저에서 사라진다.
+              이 수행의 외운 칸, 모의고사 최고 점수, 빈칸지 점수가 이 브라우저에서 사라진다. 다른 수행 진도는 그대로다.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -130,14 +152,56 @@ export function DojoApp() {
   )
 }
 
+function Lobby({
+  hydrated,
+  onOpen,
+}: {
+  hydrated: boolean
+  onOpen: (id: CourseId) => void
+}) {
+  return (
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:py-10">
+      <section>
+        <p className="text-sm font-medium text-[#8a5a12]">수행평가 직전</p>
+        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-[#1d3e66]">어떤 코드를 외울까</h1>
+        <p className="mt-3 max-w-xl leading-7 text-[#3d4a5c]">
+          회귀와 분류는 문제가 다르고, 진도도 브라우저 안에서 따로 저장된다. 친구가 다른 기기로 풀면 네 기록과 섞이지 않는다.
+        </p>
+      </section>
+      <div className="grid gap-3">
+        {courses.map((item) => {
+          const progress = hydrated ? peekSave(item.id) : EMPTY_SAVE
+          const total = questionCount(item)
+          const done = progress.mastered.length
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onOpen(item.id)}
+              className={`${item.heroClass} rounded-[28px] px-6 py-7 text-left transition hover:brightness-110`}
+            >
+              <span className="text-xs tracking-[0.18em] text-[#f0d7a2]">{item.kicker}</span>
+              <span className="mt-2 block text-3xl font-semibold">{item.title}</span>
+              <span className="mt-2 block leading-7 text-[#f6efe4]/90">{item.lede}</span>
+              <span className="mt-4 block font-mono text-sm text-[#f0d7a2]">
+                {hydrated ? `외운 칸 ${done}/${total}` : "진도 확인 중"}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </main>
+  )
+}
+
 function Home({ onReset }: { onReset: () => void }) {
-  const { go, save, hydrated } = useDojo()
-  const total = questionCount()
+  const { go, save, hydrated, course } = useDojo()
+  const total = questionCount(course)
   const done = save.mastered.length
   const nextStage =
-    stages.find((stage) =>
-      questionsFor(stage.id).some((question) => !save.mastered.includes(question.id)),
-    ) ?? stages[0]
+    course.stages.find((stage) =>
+      questionsFor(course, stage.id).some((question) => !save.mastered.includes(question.id)),
+    ) ?? course.stages[0]
 
   const modes: {
     name: string
@@ -153,7 +217,7 @@ function Home({ onReset }: { onReset: () => void }) {
     },
     {
       name: "단계 훈련",
-      text: "설명만 보고 칸을 채운다. 틀리면 목과 허리를 바꿨는지, 밑줄이 빠졌는지 말해 준다.",
+      text: course.trainModeText,
       action: { name: "map" },
       icon: ListChecks,
     },
@@ -171,7 +235,7 @@ function Home({ onReset }: { onReset: () => void }) {
     },
     {
       name: "함정 10개",
-      text: "순서, 30%, 파란 점, 밑줄. 철자보다 이쪽을 더 많이 틀린다.",
+      text: course.trapModeText,
       action: { name: "traps" },
       icon: TriangleAlert,
     },
@@ -179,12 +243,10 @@ function Home({ onReset }: { onReset: () => void }) {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:py-10">
-      <section className="denim relative overflow-hidden rounded-[28px] px-6 py-8 sm:px-8">
+      <section className={`${course.heroClass} relative overflow-hidden rounded-[28px] px-6 py-8 sm:px-8`}>
         <p className="text-xs tracking-[0.18em] text-[#f0d7a2]">수행평가 직전</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">진스 도장</h1>
-        <p className="mt-3 max-w-xl text-lg leading-8 text-[#f6efe4]/90">
-          목둘레로 허리둘레를 맞히는 선형회귀. 선생님이 지운 칸을, 한글 설명만 보고 다시 쓴다.
-        </p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">{course.title}</h1>
+        <p className="mt-3 max-w-xl text-lg leading-8 text-[#f6efe4]/90">{course.lede}</p>
         <Button
           type="button"
           className="mt-6 h-11 bg-[#f0d7a2] text-[#1d3e66] hover:bg-[#f6e3b8]"
@@ -196,7 +258,7 @@ function Home({ onReset }: { onReset: () => void }) {
 
       <section className="rounded-2xl bg-[#fff4d8] px-4 py-4 ring-1 ring-[#ead39a]">
         <p className="text-sm font-medium text-[#8a5a12]">한 줄로 외우기</p>
-        <p className="mt-1 leading-7 text-[#3d3422]">{story}</p>
+        <p className="mt-1 leading-7 text-[#3d3422]">{course.story}</p>
       </section>
 
       <div className="grid gap-3">
@@ -228,11 +290,16 @@ function Home({ onReset }: { onReset: () => void }) {
         <Stat label="모의고사" value={hydrated && save.bestExam !== null ? `${save.bestExam}%` : "·"} />
         <Stat label="최고 콤보" value={hydrated && save.bestCombo > 0 ? String(save.bestCombo) : "·"} />
       </section>
-      <div className="flex items-center justify-between gap-3 text-sm text-[#8a8072]">
-        <p>진도는 이 브라우저에만 저장된다.</p>
-        <Button type="button" variant="ghost" className="h-8" onClick={onReset}>
-          진도 지우기
-        </Button>
+      <div className="flex flex-col items-start gap-2 text-sm text-[#8a8072] sm:flex-row sm:items-center sm:justify-between">
+        <p>이 수행의 진도는 이 브라우저에만 저장된다. 다른 수행이랑 섞이지 않는다.</p>
+        <div className="flex shrink-0 gap-1">
+          <Button type="button" variant="ghost" className="h-8" onClick={() => go({ name: "lobby" })}>
+            다른 수행
+          </Button>
+          <Button type="button" variant="ghost" className="h-8" onClick={onReset}>
+            진도 지우기
+          </Button>
+        </div>
       </div>
     </main>
   )

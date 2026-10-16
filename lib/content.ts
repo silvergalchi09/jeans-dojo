@@ -1,3 +1,4 @@
+import type { Course } from "./course"
 import { normalizeAnswer, type Blank, type Mistake } from "./grade"
 
 export type Question = {
@@ -44,14 +45,14 @@ export type SheetSection = {
   blanks: Blank[]
 }
 
-function eq(answer: string, message: string): Mistake {
+export function eq(answer: string, message: string): Mistake {
   return {
     test: (value) => value === normalizeAnswer(answer),
     message,
   }
 }
 
-function blank(
+export function blank(
   id: string,
   label: string,
   answer: string,
@@ -1104,4 +1105,26 @@ export function rankFor(percent: number) {
     return { name: "아슬아슬", line: "실전 빈칸지를 한 장 더 풀자. 순서랑 밑줄이 자주 샌다." }
   }
   return { name: "한 번 더", line: "해설을 열고 줄을 소리 내서 읽은 다음, 1단계부터 다시." }
+}
+
+export const jeansCourse: Course = {
+  id: "jeans",
+  kicker: "JEANS LAB",
+  title: "진스 도장",
+  heroClass: "denim",
+  lede: "목둘레로 허리둘레를 맞히는 선형회귀. 선생님이 지운 칸을, 한글 설명만 보고 다시 쓴다.",
+  story,
+  trainModeText: "설명만 보고 칸을 채운다. 틀리면 목과 허리를 바꿨는지, 밑줄이 빠졌는지 말해 준다.",
+  trapModeText: "순서, 30%, 파란 점, 밑줄. 철자보다 이쪽을 더 많이 틀린다.",
+  glossaryHint: "이름 검색. 예: coef, 목, split",
+  trapClear: "순서, 밑줄, 색, 학습이랑 시험을 다 갈랐다.",
+  trapMiss: "틀린 함정은 해설의 그 줄을 다시 보면 된다. 코드 철자보다 이쪽을 선생님이 더 자주 틀린다.",
+  figure: "jeans",
+  stages,
+  questions,
+  studyLines,
+  glossary,
+  traps,
+  sheetSections,
+  rankFor,
 }

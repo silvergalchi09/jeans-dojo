@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { FormEvent } from "react"
 import { Button } from "@/components/ui/button"
-import { questions, rankFor, type Question } from "@/lib/content"
+import type { Question } from "@/lib/content"
 import { gradeBlank } from "@/lib/grade"
 import { CodePrompt } from "@/components/dojo/code-prompt"
 import { useDojo } from "@/components/dojo/context"
@@ -27,7 +27,8 @@ function shuffle<T>(items: T[]) {
 }
 
 export function ExamView() {
-  const { go, master, noteExam } = useDojo()
+  const { go, master, noteExam, course } = useDojo()
+  const questions = course.questions
   const [phase, setPhase] = useState<Phase>("pick")
   const [round, setRound] = useState<Question[]>([])
   const [index, setIndex] = useState(0)
@@ -142,7 +143,7 @@ export function ExamView() {
   if (phase === "result") {
     const correct = reviews.filter((item) => item.ok).length
     const percent = reviews.length ? Math.round((correct / reviews.length) * 100) : 0
-    const rank = rankFor(percent)
+    const rank = course.rankFor(percent)
     const missed = reviews.filter((item) => !item.ok)
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6">

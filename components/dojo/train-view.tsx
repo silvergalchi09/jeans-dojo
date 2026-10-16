@@ -5,7 +5,8 @@ import type { FormEvent } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/progress"
-import { questionsFor, stages, type Question } from "@/lib/content"
+import type { Question } from "@/lib/content"
+import { questionsFor } from "@/lib/course"
 import { gradeBlank } from "@/lib/grade"
 import { CodePrompt } from "@/components/dojo/code-prompt"
 import { useDojo } from "@/components/dojo/context"
@@ -14,9 +15,10 @@ type Status = "idle" | "good" | "bad"
 type Phase = "ask" | "solved" | "revealed"
 
 export function StageMap() {
-  const { save, hydrated, go } = useDojo()
+  const { save, hydrated, go, course } = useDojo()
+  const stages = course.stages
   const weak = stages.flatMap((stage) =>
-    questionsFor(stage.id).filter((question) => !save.mastered.includes(question.id)),
+    questionsFor(course, stage.id).filter((question) => !save.mastered.includes(question.id)),
   )
 
   return (
@@ -30,7 +32,7 @@ export function StageMap() {
       </div>
       <ol className="grid gap-3">
         {stages.map((stage) => {
-          const items = questionsFor(stage.id)
+          const items = questionsFor(course, stage.id)
           const done = items.filter((question) => save.mastered.includes(question.id)).length
           return (
             <li key={stage.id}>
@@ -54,7 +56,7 @@ export function StageMap() {
           )
         })}
       </ol>
-      {hydrated && weak.length > 0 && weak.length < stages.reduce((sum, stage) => sum + questionsFor(stage.id).length, 0) && (
+      {hydrated && weak.length > 0 && weak.length < stages.reduce((sum, stage) => sum + questionsFor(course, stage.id).length, 0) && (
         <Button
           type="button"
           variant="outline"
@@ -75,8 +77,9 @@ export function StageMap() {
 }
 
 export function TrainView({ stage, questionId }: { stage: number; questionId?: string }) {
-  const { go, master, noteCombo } = useDojo()
-  const items = questionsFor(stage)
+  const { go, master, noteCombo, course } = useDojo()
+  const stages = course.stages
+  const items = questionsFor(course, stage)
   const info = stages.find((item) => item.id === stage)
   const start = Math.max(
     0,

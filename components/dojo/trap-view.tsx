@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { traps, type Trap } from "@/lib/content"
+import type { Trap } from "@/lib/content"
 import { useDojo } from "@/components/dojo/context"
 
 type Card = Trap & { shuffled: string[] }
@@ -17,9 +17,9 @@ function shuffle<T>(items: T[]) {
 }
 
 export function TrapView() {
-  const { go } = useDojo()
+  const { go, course } = useDojo()
   const [round] = useState<Card[]>(() =>
-    shuffle(traps).map((trap) => ({ ...trap, shuffled: shuffle(trap.choices) })),
+    shuffle(course.traps).map((trap) => ({ ...trap, shuffled: shuffle(trap.choices) })),
   )
   const [index, setIndex] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
@@ -35,9 +35,7 @@ export function TrapView() {
           {correct} / {round.length}
         </h1>
         <p className="leading-7 text-[#3d4a5c]">
-          {correct === round.length
-            ? "순서, 밑줄, 색, 학습이랑 시험을 다 갈랐다."
-            : "틀린 함정은 해설의 그 줄을 다시 보면 된다. 코드 철자보다 이쪽을 선생님이 더 자주 틀린다."}
+          {correct === round.length ? course.trapClear : course.trapMiss}
         </p>
         <div className="flex gap-2">
           <Button type="button" className="h-11" onClick={() => go({ name: "study" })}>

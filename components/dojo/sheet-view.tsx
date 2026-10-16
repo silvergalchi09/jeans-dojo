@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { rankFor, sheetBlankCount, sheetSections } from "@/lib/content"
+import { sheetBlankCount } from "@/lib/course"
 import { gradeBlank, type Blank } from "@/lib/grade"
 import { CodePrompt } from "@/components/dojo/code-prompt"
 import { useDojo } from "@/components/dojo/context"
@@ -10,13 +10,14 @@ import { useDojo } from "@/components/dojo/context"
 type Status = "idle" | "good" | "bad"
 
 export function SheetView() {
-  const { noteSheet } = useDojo()
+  const { noteSheet, course } = useDojo()
+  const sheetSections = course.sheetSections
   const [values, setValues] = useState<Record<string, string>>({})
   const [status, setStatus] = useState<Record<string, Status>>({})
   const [messages, setMessages] = useState<Record<string, string>>({})
   const [hintLevel, setHintLevel] = useState(0)
   const [graded, setGraded] = useState(false)
-  const total = sheetBlankCount()
+  const total = sheetBlankCount(course)
 
   const correct = useMemo(
     () => Object.values(status).filter((item) => item === "good").length,
@@ -62,7 +63,7 @@ export function SheetView() {
   }
 
   const percent = Math.round((correct / total) * 100)
-  const rank = rankFor(percent)
+  const rank = course.rankFor(percent)
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6">

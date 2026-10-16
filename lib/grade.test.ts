@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import { questions, sheetSections } from "./content"
+import { penguinCourse } from "./penguins"
 import { gradeBlank, normalizeAnswer } from "./grade"
 
 test("spaces, quotes, and commas collapse", () => {
@@ -49,6 +50,58 @@ test("templates only mention blanks that exist, once each on a sheet", () => {
     return section.blanks.map((item) => item.id)
   })
   assert.equal(new Set(sheetIds).size, sheetIds.length)
+})
+
+test("penguin answers and sheet blanks are accepted once each", () => {
+  for (const question of penguinCourse.questions) {
+    for (const item of question.blanks) {
+      assert.equal(gradeBlank(item.answer, item).ok, true, `${question.id}:${item.id}`)
+      for (const alias of item.accept ?? []) {
+        assert.equal(gradeBlank(alias, item).ok, true, `${question.id}:${item.id}:${alias}`)
+      }
+    }
+    const ids = [...question.template.matchAll(/\{\{([^}]+)\}\}/g)].map((match) => match[1])
+    for (const id of ids) {
+      assert.ok(question.blanks.some((item) => item.id === id), `${question.id}:${id}`)
+    }
+  }
+  const sheetIds = penguinCourse.sheetSections.flatMap((section) => {
+    const ids = [...section.template.matchAll(/\{\{([^}]+)\}\}/g)].map((match) => match[1])
+    for (const id of ids) {
+      assert.ok(section.blanks.some((item) => item.id === id), `${section.id}:${id}`)
+    }
+    assert.equal(new Set(ids).size, ids.length, section.id)
+    for (const item of section.blanks) {
+      assert.equal(gradeBlank(item.answer, item).ok, true, `${section.id}:${item.id}`)
+    }
+    return section.blanks.map((item) => item.id)
+  })
+  assert.equal(new Set(sheetIds).size, sheetIds.length)
+  assert.equal(penguinCourse.traps.length, 10)
+})
+
+test("penguin traps name the jeans mix-ups", () => {
+  const split = penguinCourse.questions.find((question) => question.id === "pg-split-args")
+  assert.ok(split)
+  assert.match(
+    gradeBlank("test_size=0.3, random_state=42", split.blanks[0]).message ?? "",
+    /진스/,
+  )
+
+  const drop = penguinCourse.questions.find((question) => question.id === "pg-dropna")
+  assert.ok(drop)
+  assert.match(gradeBlank("axis=1, inplace=True", drop.blanks[1]).message ?? "", /열/)
+
+  const cols = penguinCourse.questions.find((question) => question.id === "pg-x-cols")
+  assert.ok(cols)
+  assert.match(
+    gradeBlank("['culmen_length_mm', 'culmen_depth_mm', 'flipper_length_mm']", cols.blanks[0]).message ?? "",
+    /두 겹/,
+  )
+
+  const pred = penguinCourse.questions.find((question) => question.id === "pg-pred")
+  assert.ok(pred)
+  assert.match(gradeBlank("predictions", pred.blanks[0]).message ?? "", /dt\.pred/)
 })
 
 test("case, underscore, and swaps get a specific note", () => {

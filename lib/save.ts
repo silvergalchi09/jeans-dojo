@@ -12,12 +12,24 @@ export const EMPTY_SAVE: Save = {
   bestSheet: null,
 }
 
-const KEY = "jeans-dojo-save-v1"
+const KEYS: Record<string, string> = {
+  jeans: "jeans-dojo-save-v1",
+  penguins: "penguins-dojo-save-v1",
+}
 
-export function loadSave(): Save {
+let activeId = "jeans"
+let memory: Save = EMPTY_SAVE
+let loaded = false
+const listeners = new Set<() => void>()
+
+function storageKey(courseId: string) {
+  return KEYS[courseId] ?? `dojo-save-v1:${courseId}`
+}
+
+function readKey(key: string): Save {
   if (typeof window === "undefined") return EMPTY_SAVE
   try {
-    const raw = window.localStorage.getItem(KEY)
+    const raw = window.localStorage.getItem(key)
     if (!raw) return EMPTY_SAVE
     const parsed = JSON.parse(raw) as Partial<Save>
     return {
@@ -33,14 +45,27 @@ export function loadSave(): Save {
   }
 }
 
-export function writeSave(save: Save) {
-  if (typeof window === "undefined") return
-  window.localStorage.setItem(KEY, JSON.stringify(save))
+export function peekSave(courseId: string): Save {
+  if (courseId === activeId && loaded) return memory
+  return readKey(storageKey(courseId))
 }
 
-let memory: Save = EMPTY_SAVE
-let loaded = false
-const listeners = new Set<() => void>()
+export function setSaveCourse(courseId: string) {
+  if (activeId === courseId && loaded) return
+  activeId = courseId
+  memory = readKey(storageKey(courseId))
+  loaded = true
+  for (const listener of listeners) listener()
+}
+
+export function loadSave(): Save {
+  return readKey(storageKey(activeId))
+}
+
+export function writeSave(save: Save) {
+  if (typeof window === "undefined") return
+  window.localStorage.setItem(storageKey(activeId), JSON.stringify(save))
+}
 
 export function subscribeSave(listener: () => void) {
   listeners.add(listener)

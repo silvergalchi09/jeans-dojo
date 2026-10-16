@@ -1,9 +1,11 @@
 "use client"
 
 import { createContext, useContext } from "react"
+import type { Course } from "@/lib/course"
 import type { Save } from "@/lib/save"
 
 export type Screen =
+  | { name: "lobby" }
   | { name: "home" }
   | { name: "study" }
   | { name: "map" }
@@ -13,6 +15,7 @@ export type Screen =
   | { name: "traps" }
 
 type DojoContextValue = {
+  course: Course
   save: Save
   hydrated: boolean
   screen: Screen

@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { glossary, story, studyLines } from "@/lib/content"
-import { JeansChart } from "@/components/dojo/chart"
+import { JeansChart, PenguinTree } from "@/components/dojo/chart"
 import { useDojo } from "@/components/dojo/context"
 
 export function StudyView() {
-  const { go } = useDojo()
+  const { go, course } = useDojo()
+  const { glossary, story, studyLines } = course
   const [covered, setCovered] = useState(false)
   const [open, setOpen] = useState<Record<number, boolean>>({})
   const [query, setQuery] = useState("")
@@ -19,7 +19,7 @@ export function StudyView() {
     return glossary.filter((item) =>
       `${item.term} ${item.say} ${item.write}`.toLowerCase().includes(needle),
     )
-  }, [query])
+  }, [query, glossary])
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6">
@@ -29,7 +29,7 @@ export function StudyView() {
         <p className="mt-2 leading-7 text-[#3d4a5c]">{story}</p>
       </div>
 
-      <JeansChart />
+      {course.figure === "jeans" ? <JeansChart /> : <PenguinTree />}
 
       <div className="flex flex-wrap gap-2">
         <Button
@@ -53,7 +53,7 @@ export function StudyView() {
           if (!line.code) return <li key={index} className="h-3 bg-[#f3ead8]" />
           const revealed = !covered || open[index]
           return (
-            <li key={line.code} className="border-b border-[#f0e4cc] last:border-b-0">
+            <li key={`${index}-${line.code}`} className="border-b border-[#f0e4cc] last:border-b-0">
               <button
                 type="button"
                 className="grid w-full gap-1 px-4 py-3 text-left sm:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] sm:gap-4"
@@ -82,7 +82,7 @@ export function StudyView() {
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="이름 검색. 예: coef, 목, split"
+          placeholder={course.glossaryHint}
           className="mt-3 h-11 bg-white"
           aria-label="빈칸 사전 검색"
         />
