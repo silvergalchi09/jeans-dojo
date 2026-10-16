@@ -8,7 +8,7 @@ export const penguinCourse: Course = {
   id: "penguins",
   kicker: "PENGUIN LAB",
   title: "펭귄 도장",
-  heroClass: "ink",
+  heroClass: "penguin-hero",
   lede: "부리와 날개로 펭귄 종을 가리는 결정트리. 선생님이 지운 칸을, 한글 설명만 보고 다시 쓴다.",
   story:
     "결측이 있는 행을 지운 뒤, 부리 길이·부리 깊이·날개 길이로 종을 맞힌다. 시험 30%는 종 비율을 유지하고, 나무는 위 두 층만 색을 칠해 그린다.",

@@ -178,7 +178,7 @@ function Lobby({
               key={item.id}
               type="button"
               onClick={() => onOpen(item.id)}
-              className={`${item.heroClass} rounded-[28px] px-6 py-7 text-left transition hover:brightness-110`}
+              className={`${item.id === "penguins" ? "penguin-hero" : "denim"} rounded-[28px] px-6 py-7 text-left transition hover:brightness-110`}
             >
               <span className="text-xs tracking-[0.18em] text-[#f0d7a2]">{item.kicker}</span>
               <span className="mt-2 block text-3xl font-semibold">{item.title}</span>
@@ -243,7 +243,7 @@ function Home({ onReset }: { onReset: () => void }) {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:py-10">
-      <section className={`${course.heroClass} relative overflow-hidden rounded-[28px] px-6 py-8 sm:px-8`}>
+      <section className={`${course.id === "penguins" ? "penguin-hero" : "denim"} relative overflow-hidden rounded-[28px] px-6 py-8 sm:px-8`}>
         <p className="text-xs tracking-[0.18em] text-[#f0d7a2]">수행평가 직전</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight">{course.title}</h1>
         <p className="mt-3 max-w-xl text-lg leading-8 text-[#f6efe4]/90">{course.lede}</p>
